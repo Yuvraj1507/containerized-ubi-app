@@ -164,6 +164,5 @@ This project is licensed under the **MIT License**.
 
 ## 📞 Contact
 📧 Email: ydalayi8@gmail.com 
-🔗 LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)  
-🚀 GitHub: [Your Repo](https://github.com/your-repo/containerized-ubi-app)
+🔗 LinkedIn: [Yuvaraju Dalayi](https://www.linkedin.com/in/yuvarajdalayi/)  
 
