@@ -1,0 +1,18 @@
+{
+    "dashboard": {
+      "title": "Flask App Metrics",
+      "panels": [
+        {
+          "title": "Request Count",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "http_requests_total",
+              "format": "time_series"
+            }
+          ]
+        }
+      ]
+    }
+  }
+  

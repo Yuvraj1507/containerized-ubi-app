@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t myregistry.com/flask-app:latest .'
+            }
+        }
+        stage('Push') {
+            steps {
+                withDockerRegistry(credentialsId: 'docker-credentials') {
+                    sh 'docker push myregistry.com/flask-app:latest'
+                }
+            }
+        }
+    }
+}

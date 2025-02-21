@@ -1,0 +1,88 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: flask-app-pipeline
+spec:
+  params:
+    - name: git-url
+      type: string
+      description: Git repository URL of the application
+    - name: image-url
+      type: string
+      description: Container registry URL
+  tasks:
+    # Step 1: Clone the repository
+    - name: clone-repo
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: "$(params.git-url)"
+        - name: subdirectory
+          value: "flask-app"
+        - name: deleteExisting
+          value: "true"
+
+    # Step 2: Run unit tests before building the image
+    - name: run-tests
+      taskRef:
+        name: python-tests
+      runAfter:
+        - clone-repo
+      params:
+        - name: TEST_SCRIPT
+          value: "pytest tests/"
+
+    # Step 3: Build the container image
+    - name: build-image
+      taskRef:
+        name: buildah
+      runAfter:
+        - run-tests
+      params:
+        - name: IMAGE
+          value: "$(params.image-url)"
+        - name: STORAGE_DRIVER
+          value: "vfs"
+
+    # Step 4: Perform security scan using Trivy
+    - name: security-scan
+      taskRef:
+        name: trivy-scan
+      runAfter:
+        - build-image
+      params:
+        - name: IMAGE
+          value: "$(params.image-url)"
+
+    # Step 5: Push the image to the container registry
+    - name: push-image
+      taskRef:
+        name: buildah
+      runAfter:
+        - security-scan
+      params:
+        - name: IMAGE
+          value: "$(params.image-url)"
+        - name: PUSH_EXTRA_ARGS
+          value: "--tls-verify=false"
+        - name: STORAGE_DRIVER
+          value: "vfs"
+        - name: DOCKER_AUTH
+          value: "$(secrets.docker-auth)"
+
+    # Step 6: Deploy to Kubernetes
+    - name: deploy-k8s
+      taskRef:
+        name: kubernetes-actions
+      runAfter:
+        - push-image
+      params:
+        - name: script
+          value: |
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+            kubectl apply -f k8s/ingress.yaml
+            kubectl apply -f k8s/rbac.yaml
+            kubectl apply -f k8s/security.yaml
+            kubectl apply -f k8s/monitoring.yaml
